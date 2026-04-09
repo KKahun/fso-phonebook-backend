@@ -1,5 +1,9 @@
 require('dotenv').config()
 const PhonebookEntry = require('./models/person')
+console.log('import PhonebookEntry', PhonebookEntry)
+PhonebookEntry.find({}).then(persons => {
+    console.log(persons)
+  })
 const express = require('express')
 const morgan = require('morgan')
 const app = express()
