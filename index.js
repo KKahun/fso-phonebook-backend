@@ -19,29 +19,6 @@ app.use(morgan(function (tokens, req, res) {
   ].join(' ')
 }))
 
-let persons = [
-  { 
-    "id": "1",
-    "name": "Arto Hellas", 
-    "number": "040-123456"
-  },
-  { 
-    "id": "2",
-    "name": "Ada Lovelace", 
-    "number": "39-44-5323523"
-  },
-  { 
-    "id": "3",
-    "name": "Dan Abramov", 
-    "number": "12-43-234345"
-  },
-  { 
-    "id": "4",
-    "name": "Mary Poppendieck", 
-    "number": "39-23-6423122"
-  }
-]
-
 // ROUTES
 app.get('/', (request, response) => {
   response.send('<h1>Hello World!</h1>')
@@ -73,13 +50,12 @@ app.get('/api/persons/:id', (request, response, next) => {
       response.status(404).end()
     }
   })
-  .catch(error => next(error))
+    .catch(error => next(error))
 })
 
 app.delete('/api/persons/:id', (request, response, next) => {
-  const id = request.params.id
   PhonebookEntry.findByIdAndDelete(request.params.id)
-    .then(result => {
+    .then(() => {
       response.status(204).end()
     })
     .catch(error => next(error))
@@ -92,11 +68,11 @@ app.post('/api/persons', (request, response, next) => {
     name: body.name,
     number: body.number
   })
-  
+
   person.save().then(savedPerson => {
     response.json(savedPerson)
   })
-  .catch(error => next(error))
+    .catch(error => next(error))
 })
 
 app.put('/api/persons/:id', (request, response, next) => {
@@ -112,9 +88,9 @@ app.put('/api/persons/:id', (request, response, next) => {
       person.number = number
 
       return person.save({ validateBeforeSave: true })
-      .then((updatedPerson) => {
-        response.json(updatedPerson)
-      })
+        .then((updatedPerson) => {
+          response.json(updatedPerson)
+        })
     })
     .catch(error => next(error))
 })
