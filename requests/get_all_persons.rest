@@ -4,19 +4,28 @@ GET http://localhost:3001/api/persons/
 GET http://localhost:3001/api/info/
 
 ###
-GET http://localhost:3001/api/persons/2
+GET http://localhost:3001/api/persons/69d670f51f7ed50eaf950e7c
 
 ###
 GET http://localhost:3001/api/persons/10
 
 ###
-DELETE http://localhost:3001/api/persons/2
+DELETE http://localhost:3001/api/persons/69d670f51f7ed50eaf950e7c
 
 ###
 POST http://localhost:3001/api/persons/
 Content-Type: application/json
 
 {
-    "name": "Matthew Fraser",
+    "name": "Matthew",
     "number": "585-794-7457"
+}
+
+###
+PUT http://localhost:3001/api/persons/69d7d12ef18660051013ef1d
+Content-Type: application/json
+
+{
+    "name": "Matthew",
+    "number": "525-794-7457"
 }

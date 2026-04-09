@@ -1,3 +1,5 @@
+require('dotenv').config()
+const PhonebookEntry = require('./models/person')
 const express = require('express')
 const morgan = require('morgan')
 const app = express()
@@ -40,60 +42,104 @@ let persons = [
   }
 ]
 
+// ROUTES
 app.get('/', (request, response) => {
   response.send('<h1>Hello World!</h1>')
 })
 
 app.get('/api/persons', (request, response) => {
-  response.json(persons)
+  PhonebookEntry.find({}).then(persons => {
+    response.json(persons)
+  })
 })
 
 app.get('/api/info', (request, response) => {
-  const numPeople = persons.length
-  const now = new Date().toLocaleString()
-  console.log(now)
-  response.send(`
-    <p>Phonebook has info for ${numPeople} people</p>
-    <p>${now}</p>
-  `)
+  PhonebookEntry.find({}).then(persons => {
+    const numPeople = persons.length
+    const now = new Date().toLocaleString()
+    console.log(now)
+    response.send(`
+      <p>Phonebook has info for ${numPeople} people</p>
+      <p>${now}</p>
+    `)
+  })
 })
 
-app.get('/api/persons/:id', (request, response) => {
+app.get('/api/persons/:id', (request, response, next) => {
+  PhonebookEntry.findById(request.params.id).then(person => {
+    if (person) {
+      response.json(person)
+    } else {
+      response.status(404).end()
+    }
+  })
+  .catch(error => next(error))
+})
+
+app.delete('/api/persons/:id', (request, response, next) => {
   const id = request.params.id
-  const person = persons.find(person => person.id === id)
-  if (person) {
-    response.json(person)
-  } else {
-    response.status(404).end()
-  }
+  PhonebookEntry.findByIdAndDelete(request.params.id)
+    .then(result => {
+      response.status(204).end()
+    })
+    .catch(error => next(error))
 })
 
-app.delete('/api/persons/:id', (request, response) => {
-  const id = request.params.id
-  persons = persons.filter(person => person.id !== id)
-  
-  response.status(204).end()
-})
-
-app.post('/api/persons', (request, response) => {
-  const newId = String(Math.floor(Math.random()*10000))
+app.post('/api/persons', (request, response, next) => {
   const body = request.body
-  if (!body.name || !body.number) {
-    return response.status(400).json({
-      error: 'must include both name and number'
+
+  const person = new PhonebookEntry({
+    name: body.name,
+    number: body.number
+  })
+  
+  person.save().then(savedPerson => {
+    response.json(savedPerson)
+  })
+  .catch(error => next(error))
+})
+
+app.put('/api/persons/:id', (request, response, next) => {
+  const { name, number } = request.body
+
+  PhonebookEntry.findById(request.params.id)
+    .then(person => {
+      if (!person) {
+        return response.status(404).end()
+      }
+
+      person.name = name
+      person.number = number
+
+      return person.save({ validateBeforeSave: true })
+      .then((updatedPerson) => {
+        response.json(updatedPerson)
+      })
     })
-  }
-  if (persons.map(person => person.name)
-      .includes(body.name)) {
-    return response.status(400).json({
-      error: 'name already exists in phonebook'
-    })
+    .catch(error => next(error))
+})
+
+// MIDDLEWARE
+const unknownEndpoint = (request, response) => {
+  response.status(404).send({ error: 'unknown endpoint' })
+}
+
+app.use(unknownEndpoint)
+
+
+const errorHandler = (error, request, response, next) => {
+  console.error(error.message)
+
+  if (error.name === 'CastError') {
+    return response.status(400).send({ error: 'malformatted id' })
+  } else if (error.name === 'ValidationError') {
+    return response.status(400).json({ error: error.message })
   }
 
-  const person = {id: newId, name: body.name, number: body.number}
-  persons = persons.concat(person)
-  response.json(person)
-})
+  next(error)
+}
+
+app.use(errorHandler)
 
 const PORT = process.env.PORT || 3001
 app.listen(PORT, () => {
